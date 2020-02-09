@@ -22,12 +22,12 @@ class cross_validation:
     def evaluate_log(self, X, Y, K=3):
         split_X = self.partition(X, K)
         split_Y = self.partition(Y, K)
-        log = log_regression(0.1,200)
+        log = log_regression()
         score = [0]*(K-1)
         for i in range(K-1):
             set = split_X[i]
             setY = split_Y[i]
-            feature = log.fit(set, setY)
+            feature = log.fit(set, setY,0.1,200)
             fit_y = log.predict(split_X[K-1], feature)
             score[i] = log.loss(fit_y, split_Y[K-1])
         return np.mean(score)

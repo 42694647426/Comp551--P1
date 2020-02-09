@@ -103,14 +103,19 @@ X = np.array(data)
 Y = np.array(res)
 
 
-#fit model
-log_model  = log_regression(0.01, 150)
+#fit log model
+log_model  = log_regression()
 X = log_model.bias(X)
-fit_iono  = log_model.fit(X,Y)
+fit_iono  = log_model.fit(X,Y,0.01, 150)
 pre = log_model.predict(X,fit_iono)
-loss = log_model.loss(pre,Y)
+loss = log_model.evaluate_acc(pre,Y)
 print(fit_iono, loss)
 validation  = cross_validation(3)
 score = validation.evaluate_log(X,Y)
 print(score)
+
+# fit naive bayes
+bayes_model = NaiveBayes()
+fit_bayes = bayes_model.fit(X,Y)
+pre = bayes_model.predict(X)
 

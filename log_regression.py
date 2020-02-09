@@ -9,9 +9,7 @@ from sklearn.model_selection import train_test_split
 
 class log_regression:
     
-    def __init__(self, rate, gradient_iter):
-        self.rate = rate
-        self.gradient_iter = gradient_iter
+
         
     def bias(self, X):
         return np.insert(X, 0,1,axis=1)
@@ -30,9 +28,7 @@ class log_regression:
     def predict(self, X, feature, threshold =0.5):
         return self.predict_prob(X, feature) >=threshold
         
-    def fit(self, X, Y):
-        rate = self.rate
-        iter = self.gradient_iter
+    def fit(self, X, Y,rate,iter):
         
         feature=[0]*X.shape[1]
         
@@ -43,5 +39,5 @@ class log_regression:
         
         return feature
 
-    def evaluate_acc(realY, predictY):
+    def evaluate_acc(self, predictY,realY):
         return sum((realY-predictY)**2)
