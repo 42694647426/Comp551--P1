@@ -17,13 +17,14 @@ class log_regression:
         return np.insert(X, 0,1,axis=1)
     
     def log(self, z):
-        return 1/(1+np.exp(-z))
+        z=np.array(z,dtype=np.float32)
+        return 1.0/(1.0+np.exp(-1.0*z))
     
     def loss (self, y_predict, y_real):
-        return (-y_real*np.log(y_predict)-(1-y_real)* np.log(1 - y_predict)).mean()
+        return (-y_real*np.log1p(y_predict)+(1-y_real)*np.log1p(y_predict)).mean()
         
     def predict_prob(self, X, features):
-        X = self.bias(X)
+        
         return np.array(self.log(np.dot(X,features)))
     
     def predict(self, X, feature, threshold =0.5):
@@ -32,10 +33,10 @@ class log_regression:
     def fit(self, X, Y):
         rate = self.rate
         iter = self.gradient_iter
-        X = self.bias(X)
+        
         feature=[0]*X.shape[1]
         
-        for i in iter :
+        for i in range(iter) :
             y_predict = self.predict_prob(X, feature)
             grad = np.dot(X.T, (y_predict - Y))/Y.shape[0]
             feature = feature - rate*grad
