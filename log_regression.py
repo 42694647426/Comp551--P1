@@ -41,8 +41,6 @@ class log_regression:
             feature = feature - rate*grad
         
         return feature
-        
-    
-    
+
     def evaluate_acc(realY, predictY):
         return sum((realY-predictY)**2)
