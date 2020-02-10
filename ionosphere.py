@@ -1,9 +1,10 @@
 import pandas as pd
 from matplotlib import pyplot as plt
 import numpy as np
-from log_regression import log_regression
-from NaiveBayes import NaiveBayes
-from cross_validation import cross_validation
+from log_regression2 import log_regression
+from NaiveBayes3 import NaiveBayes
+from cross_validation2 import cross_validation
+import separate
 # ionosphere data
 
 data = pd.read_csv("iono.csv", header=None)
@@ -98,24 +99,44 @@ for i in range(4):
     
 plt.show()
 
+
+
 # Final data variables X and target variables Y
 X = np.array(data)
 Y = np.array(res)
 
 
+
 #fit log model
-log_model  = log_regression()
-X = log_model.bias(X)
-fit_iono  = log_model.fit(X,Y,0.01, 150)
-pre = log_model.predict(X,fit_iono)
-loss = log_model.evaluate_acc(pre,Y)
-print(fit_iono, loss)
+log_model  = log_regression(0.01, 500)
+X = log_model.bias(X) # add bias column
+
+# Separate training and testing sets
+X_train, Y_train, X_test, Y_test = separate.separate(X,Y)
+
+# train the data
+fit_iono  = log_model.fit(X_train,Y_train) 
+
+# test data
+pre = log_model.predict(X_test,fit_iono) 
+acc = log_model.evaluate_acc(pre,Y_test)
+print(fit_iono, acc)
+
+# Cross validation
 validation  = cross_validation(3)
-score = validation.evaluate_log(X,Y)
+score = validation.evaluate_log(X_train,Y_train)
 print(score)
 
+print("Naive Bayes:")
 # fit naive bayes
 bayes_model = NaiveBayes()
-fit_bayes = bayes_model.fit(X,Y)
-pre = bayes_model.predict(X)
+fit_bayes = bayes_model.fit(X_train,Y_train)
+pre = bayes_model.predict(X_test)
+#acc = log_model.evaluate_acc(pre,Y_test)
+acc = bayes_model.evaluate_acc(pre,Y_test)
+print(acc)
+
+# Cross validation
+score = bayes_model.cross_validation(X_train,Y_train)
+print(score)
 
