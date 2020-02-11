@@ -1,6 +1,14 @@
 import pandas as pd
 from matplotlib import pyplot as plt
 import numpy as np
+from log_regression2 import log_regression
+from NaiveBayes3 import NaiveBayes
+from cross_validation2 import cross_validation
+import separate
+import seaborn as sns
+import string
+
+
 
 # dictionary of categories: contains a dictionary for each feature, mapping an integer
 # to each category
@@ -156,3 +164,60 @@ plt.show()
 # Final data variables X and target variables Y
 X = np.array(data)
 Y = np.array(res)
+
+
+#fit log model
+log_model  = log_regression(0.01, 500)
+X = log_model.bias(X) # add bias column
+
+# Separate training and testing sets
+X_train, Y_train, X_test, Y_test = separate.separate(X,Y)
+
+# train the data
+fit_iono  = log_model.fit(X_train,Y_train) 
+
+# test data
+log_pre = log_model.predict(X_test,fit_iono) 
+log_acc = log_model.evaluate_acc(log_pre,Y_test)
+print("log model: "+ str(fit_iono) + "\n\n" + "accuracy:" +str(log_acc)+"\n")
+
+# Cross validation
+validation  = cross_validation(3)
+log_score = validation.evaluate_log(X_train,Y_train)
+print("cross validation with k=3"+ str(log_score) + "\n")
+
+print("Naive Bayes:")
+# fit naive bayes
+bayes_model = NaiveBayes()
+fit_bayes = bayes_model.fit(X_train,Y_train)
+bayes_pre = bayes_model.predict(X_test)
+#acc = log_model.evaluate_acc(pre,Y_test)
+bayes_acc = bayes_model.evaluate_acc(bayes_pre,Y_test)
+print("accurary:", bayes_acc, "\n")
+
+# Cross validation
+bayes_score = bayes_model.cross_validation(X_train,Y_train)
+print("cross validation with k=3: "+ str(bayes_score) + "\n")
+
+newX = np.linspace(-25,25,55)
+newY = log_model.log(np.dot(X_test,fit_iono))
+plt.plot(newX,newY)
+plt.show()
+
+
+
+#df = pd.DataFrame(np.random.random((100,5)), columns=["a","b","c","d","e"])
+#print(df)
+# Calculate correlation between each pair of variable
+#corr_matrix=df.corr()
+# plot it
+#sns.heatmap(corr_matrix, cmap='PuOr')
+#sns.plt.show()
+
+#print(data.shape)
+df = pd.DataFrame(data, columns = list(string.ascii_letters[0:9]))
+print(df)
+corr_matrix=df.corr()
+
+sns.heatmap(corr_matrix, cmap='coolwarm', annot=True)
+#sns.plt.show()

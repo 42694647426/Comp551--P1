@@ -163,3 +163,9 @@ plt.show()
 # Final data variables X and target variables Y
 X = np.array(data)
 Y = np.array(res)
+
+df = pd.DataFrame(data, columns = list(string.ascii_letters[0:6]))
+print(df)
+corr_matrix=df.corr()
+
+sns.heatmap(corr_matrix, cmap='coolwarm', annot=True)

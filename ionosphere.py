@@ -5,6 +5,8 @@ from log_regression2 import log_regression
 from NaiveBayes3 import NaiveBayes
 from cross_validation2 import cross_validation
 import separate
+import seaborn as sns
+import string
 # ionosphere data
 
 data = pd.read_csv("iono.csv", header=None)
@@ -24,7 +26,7 @@ for i in range(len(data)):
 # delete target from data (last column from data)
 data = np.delete(data, len(data[0])-1, 1)
 
-#print(data)
+
 
 # Detect oddities
 for i in range(len(data)):
@@ -106,7 +108,6 @@ X = np.array(data)
 Y = np.array(res)
 
 
-
 #fit log model
 log_model  = log_regression(0.01, 500)
 X = log_model.bias(X) # add bias column
@@ -118,25 +119,46 @@ X_train, Y_train, X_test, Y_test = separate.separate(X,Y)
 fit_iono  = log_model.fit(X_train,Y_train) 
 
 # test data
-pre = log_model.predict(X_test,fit_iono) 
-acc = log_model.evaluate_acc(pre,Y_test)
-print(fit_iono, acc)
+log_pre = log_model.predict(X_test,fit_iono) 
+log_acc = log_model.evaluate_acc(log_pre,Y_test)
+print("log model: "+ str(fit_iono) + "\n\n" + "accuracy:" +str(log_acc)+"\n")
 
 # Cross validation
 validation  = cross_validation(3)
-score = validation.evaluate_log(X_train,Y_train)
-print(score)
+log_score = validation.evaluate_log(X_train,Y_train)
+print("cross validation with k=3"+ str(log_score) + "\n")
 
 print("Naive Bayes:")
 # fit naive bayes
 bayes_model = NaiveBayes()
 fit_bayes = bayes_model.fit(X_train,Y_train)
-pre = bayes_model.predict(X_test)
+bayes_pre = bayes_model.predict(X_test)
 #acc = log_model.evaluate_acc(pre,Y_test)
-acc = bayes_model.evaluate_acc(pre,Y_test)
-print(acc)
+bayes_acc = bayes_model.evaluate_acc(bayes_pre,Y_test)
+print("accurary:", bayes_acc, "\n")
 
 # Cross validation
-score = bayes_model.cross_validation(X_train,Y_train)
-print(score)
+bayes_score = bayes_model.cross_validation(X_train,Y_train)
+print("cross validation with k=3"+ str(bayes_score) + "\n")
+
+newX = np.linspace(-35,35,70)
+
+newY = log_model.log(np.dot(X_test,fit_iono))
+plt.plot(newX,newY)
+plt.show()
+
+#for i in range(X_test.shape[1]):
+ #   plt.subplot()
+  #  plt.scatter(X_test[:,i],newY)
+   # plt.show()
+
+#print(data[:,[1,2,3,4,5,7]])
+df = pd.DataFrame(data[:,[2,3,4,5,33]], columns=["a","b","c","d","e"])
+print(df)
+corr_matrix=df.corr()
+
+sns.heatmap(corr_matrix, cmap='PuOr')
+#sns.plt.show()
+
+
 
