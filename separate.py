@@ -1,8 +1,10 @@
 import numpy as np
+import random
 from random import randrange
 
 # Separate the train and test sets    
-def separate (X, Y, split=0.2):
+def separate (X, Y, split=0.1, seed = 0):
+    random.seed(0)
     fold_size = int(X.shape[0]*split)
     X_test = list()
     X_train = list(X)

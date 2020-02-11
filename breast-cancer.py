@@ -5,10 +5,6 @@ from log_regression2 import log_regression
 from NaiveBayes3 import NaiveBayes
 from cross_validation2 import cross_validation
 import separate
-import seaborn as sns
-import string
-
-
 
 # dictionary of categories: contains a dictionary for each feature, mapping an integer
 # to each category
@@ -36,7 +32,28 @@ def transform(data):
             
             data[i][j] = categories[j][data[i][j]]
         
+# Makes data one-hot encoded
+def oneHot(data):      
+    one_hot = []  
+    for i in range(len(data)):
+        one_hot.append(list())
         
+        for j in range(len(data[0])):
+            # Just copy non-categorical features
+            if (j+1) not in categories:
+                one_hot[i].append(data[i][j])
+            # Make categorical features one-hot encoded
+            else:
+                # Array of 0s of the length of the categories in that feature
+                temp = [0]*len(categories[j+1])
+                
+                # Put 1 to the correct category
+                temp[data[i][j]] = 1
+                
+                one_hot[i].extend(temp)
+                
+    one_hot = np.array(one_hot)            
+    return one_hot         
     
 
 
@@ -92,6 +109,9 @@ for i in range(len(data)):
 
 # delete target from data (last column from data)
 data = np.delete(data, 0, 1)
+
+# Make the input categories one_hot encoded
+one_hot = oneHot(data)
 
 #print(data)
 
@@ -162,62 +182,113 @@ plt.show()
 #plt.show()
 
 # Final data variables X and target variables Y
-X = np.array(data)
+X = np.array(one_hot)
 Y = np.array(res)
 
+##fit log model
+#log_model  = log_regression(0.001, 20000)
+#X = log_model.bias(X) # add bias column
 
-#fit log model
-log_model  = log_regression(0.01, 500)
+## Separate training and testing sets 
+#X_train, Y_train, X_test, Y_test = separate.separate(X,Y)
+
+## train the data
+#fit_iono  = log_model.fit(X_train,Y_train) 
+
+## test data
+#pre = log_model.predict(X_test,fit_iono) 
+#acc = log_model.evaluate_acc(pre,Y_test)
+#print(acc)
+
+## Cross validation
+#validation  = cross_validation(5)
+#score = validation.evaluate_log(X_train,Y_train)
+#print(score)
+
+#print("Naive Bayes:")
+## fit naive bayes
+#bayes_model = NaiveBayes()
+#fit_bayes = bayes_model.fit(X_train,Y_train)
+#pre = bayes_model.predict(X_test)
+##acc = log_model.evaluate_acc(pre,Y_test)
+#acc = bayes_model.evaluate_acc(pre,Y_test)
+#print(acc)
+
+## Cross validation
+#score = bayes_model.cross_validation(X_train,Y_train, 5)
+#print(score)
+
+## Compare accuracy of naive Bayes and logistic regression
+
+# All datasets will use for logistic regression the same learning rate = 0.01 and # iterations = 500
+rate = 0.01
+iterations = 500
+
+log_model  = log_regression(rate, iterations)
 X = log_model.bias(X) # add bias column
 
-# Separate training and testing sets
+# Separate training and testing sets 
 X_train, Y_train, X_test, Y_test = separate.separate(X,Y)
+
+
+## Logistic regression
 
 # train the data
 fit_iono  = log_model.fit(X_train,Y_train) 
 
-# test data
-log_pre = log_model.predict(X_test,fit_iono) 
-log_acc = log_model.evaluate_acc(log_pre,Y_test)
-print("log model: "+ str(fit_iono) + "\n\n" + "accuracy:" +str(log_acc)+"\n")
-
 # Cross validation
-validation  = cross_validation(3)
-log_score = validation.evaluate_log(X_train,Y_train)
-print("cross validation with k=3"+ str(log_score) + "\n")
+validation  = cross_validation(rate, max_iterations = 500)
+score = validation.evaluate_log(X_train,Y_train)
+print("Averaged training accuracy for Logistic Regression: ", score)
 
-print("Naive Bayes:")
-# fit naive bayes
+# Test data
+pre = log_model.predict(X_test,fit_iono) 
+acc = log_model.evaluate_acc(pre,Y_test)
+print("Accuracy on testing data for Logistic Regression: ", acc)
+
+## Naive BayesS
+
+# train the data
 bayes_model = NaiveBayes()
 fit_bayes = bayes_model.fit(X_train,Y_train)
-bayes_pre = bayes_model.predict(X_test)
-#acc = log_model.evaluate_acc(pre,Y_test)
-bayes_acc = bayes_model.evaluate_acc(bayes_pre,Y_test)
-print("accurary:", bayes_acc, "\n")
+
 
 # Cross validation
-bayes_score = bayes_model.cross_validation(X_train,Y_train)
-print("cross validation with k=3: "+ str(bayes_score) + "\n")
+score = bayes_model.cross_validation(X_train,Y_train)
+print("Averaged training accuracy for Naive Bayes: ", score)
 
-newX = np.linspace(-25,25,55)
-newY = log_model.log(np.dot(X_test,fit_iono))
-plt.plot(newX,newY)
+
+# Test data
+pre = bayes_model.predict(X_test)
+acc = bayes_model.evaluate_acc(pre,Y_test)
+print("Accuracy on testing data for Naive Bayes: ", acc)
+
+print()
+## Test different learning rates for gradient descent
+
+# Loss function threshold = 5*10^-5; maximum number of iterations = 1000
+acc = []
+iters=[]
+rate = 10**-15
+for i in range(20):
+    
+    # Cross validation
+    validation  = cross_validation(rate, threshold = True)
+    score, iterations = validation.evaluate_log(X_train,Y_train)
+    #print("Averaged training accuracy for Logistic Regression: ", score)
+    print("rate = ", rate, "; iterations = ", iterations, "; accuracy = ", score)
+    acc.append(score)
+    iters.append(iterations)
+    rate *= 10
+
+
+
+rate = 1
+
+plt.scatter(iters, acc)
+plt.xlabel("iterations")
+plt.ylabel("accurary")
+plt.title("the accuracy on train set as a function of iterations of gradient descent")
+
 plt.show()
-
-
-
-#df = pd.DataFrame(np.random.random((100,5)), columns=["a","b","c","d","e"])
-#print(df)
-# Calculate correlation between each pair of variable
-#corr_matrix=df.corr()
-# plot it
-#sns.heatmap(corr_matrix, cmap='PuOr')
-#sns.plt.show()
-
-#print(data.shape)
-df = pd.DataFrame(data, columns = list(string.ascii_letters[0:9]))
-print(df)
-corr_matrix=df.corr()
-
-sns.heatmap(corr_matrix, cmap='coolwarm', annot=True)
-#sns.plt.show()
+#fit log model

@@ -4,11 +4,15 @@ from log_regression2 import log_regression
 import numpy as np
 from random import randrange
 class cross_validation:
-    def __init__(self, k):
+    def __init__(self, rate, k = 5, threshold = False, max_iterations = 1000):
         self.K = k
+        self.rate = rate
+        self.threshold = threshold
+        self.max_iterations = 1000
     
     # K-fold partitioning    
-    def partition (self, X, Y, K=3):
+    def partition (self, X, Y):
+        K = self.K
         fold_size = int(X.shape[0]/K)
         X_split = list()
         copyX = list(X)
@@ -28,10 +32,13 @@ class cross_validation:
             Y_split.append(foldY)
         return (np.array(X_split),np.array(Y_split))
     
-    def evaluate_log(self, X, Y, K=3):
-        split_X, split_Y = self.partition(X, Y, K)
-        log = log_regression(0.1,200)
+    def evaluate_log(self, X, Y):
+        K = self.K
+        threshold = self.threshold
+        split_X, split_Y = self.partition(X, Y)
+        log = log_regression(self.rate,self.max_iterations)
         score = [0]*(K)
+        iterations = [0]*(K)
         
         # i = the testing set
         for i in range(K):
@@ -50,10 +57,19 @@ class cross_validation:
             trainingX = np.array(trainingX)
             trainingY = np.array(trainingY)
             
+            
             # Train data
-            feature = log.fit(trainingX, trainingY)
+            
+            if threshold == False:
+                feature = log.fit(trainingX, trainingY)
+            else:
+                feature, iterations[i] = log.fit_threshold(trainingX, trainingY)
             
             # Test data on the testing set
             fit_y = log.predict(split_X[i], feature)
             score[i] = log.evaluate_acc(fit_y, split_Y[i])
-        return np.mean(score)
+        
+        if threshold == False:
+            return np.mean(score)
+        else:
+            return np.mean(score), np.mean(iterations)

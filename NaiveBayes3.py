@@ -95,13 +95,17 @@ class NaiveBayes:
                 if self.firstoutcome_std[j] == 0:
                     p0 = 1
                 else:
-                    p0 = self.Gaussian(X[i,j], self.firstoutcome_mean[j], self.firstoutcome_std[j])
+                    p0 = self.Gaussian(X[i,j], self.firstoutcome_mean[j], (self.firstoutcome_std[j])**2)
                 
                 if self.secondoutcome_std[j] == 0:
                     p1 = 1
                 else:
-                    p1 = self.Gaussian(X[i,j], self.secondoutcome_mean[j], self.secondoutcome_std[j])     
-                              
+                    p1 = self.Gaussian(X[i,j], self.secondoutcome_mean[j], (self.secondoutcome_std[j])**2)     
+                
+                if p0 == 0:
+                    p0 = 10**-20
+                if p1 == 0:
+                    p1 = 10**-20
                 finalp0 += np.log(p0)
                 finalp1 += np.log(p1)
             
@@ -173,7 +177,7 @@ class NaiveBayes:
             Y_split.append(foldY)
         return (np.array(X_split),np.array(Y_split))
     
-    def cross_validation(self, X, Y, K=3):
+    def cross_validation(self, X, Y, K=5):
         split_X, split_Y = self.partition(X, Y, K)
         #log = log_regression(0.1,200)
         score = [0]*(K)
