@@ -312,5 +312,45 @@ plt.ylabel("accurary")
 plt.title("the accuracy on train set as a function of iterations of gradient descent")
 
 plt.show()
-#fit log model
+#size of x and accuracy
+acc = []
+size = []
+split_size = 0.1
 
+for i in range(9):
+    X_train, Y_train, X_test, Y_test = separate.separate(X,Y, split=split_size)
+    # Cross validation
+    validation  = cross_validation(rate, threshold = True)
+    score, iterations = validation.evaluate_log(X_train,Y_train)
+    #print("Averaged training accuracy for Logistic Regression: ", score)
+    print("size of X = ", X_train.shape[0], "; iterations = ", iterations, "; accuracy = ", score)
+    size.append(X_train.shape[0])
+    acc.append(score)
+    split_size += 0.1
+    
+plt.scatter(size, acc)
+plt.xlabel("size of X_train")
+plt.ylabel("accurary")
+plt.title("the accuracy on train set as a function of size of X on logistic model")
+
+plt.show()
+#bayes model
+acc = []
+size = []
+split_size = 0.1
+
+for i in range(9):
+    X_train, Y_train, X_test, Y_test = separate.separate(X,Y, split=split_size)
+    # Cross validation
+    score = bayes_model.cross_validation(X_train,Y_train)
+    #print("Averaged training accuracy for Logistic Regression: ", score)
+    print("size of X = ", X_train.shape[0], "; accuracy = ", score)
+    size.append(X_train.shape[0])
+    acc.append(score)
+    split_size += 0.1
+    
+plt.xlabel("size of X_train")
+plt.ylabel("accurary")
+plt.title("the accuracy on train set as a function of size od X on Naive Bayes model")
+plt.scatter(size, acc)
+plt.show()
