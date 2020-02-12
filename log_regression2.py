@@ -38,11 +38,11 @@ class log_regression:
     # Train dataset    
     def fit(self, X, Y):
         rate = self.rate
-        iter = self.gradient_iter
+        iterations = self.gradient_iter
         
         feature=[0]*X.shape[1]
         
-        for i in range(iter) :
+        for i in range(iterations) :
             y_predict = self.predict_prob(X, feature)
             grad = np.dot(X.T, (y_predict - Y))/Y.shape[0]
             #grad = np.dot(X.T, (y_predict - Y))

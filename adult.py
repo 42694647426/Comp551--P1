@@ -185,44 +185,7 @@ plt.show()
 X = np.array(one_hot)
 Y = np.array(res)
 
-#rate = 0.000000000001
-
-##fit log model
-#log_model  = log_regression(rate, 500)
-#X = log_model.bias(X) # add bias column
-
-## Separate training and testing sets 
-#X_train, Y_train, X_test, Y_test = separate.separate(X,Y)
-
-## train the data
-#fit_iono  = log_model.fit(X_train,Y_train) 
-
-## test data
-#pre = log_model.predict(X_test,fit_iono) 
-#acc = log_model.evaluate_acc(pre,Y_test)
-#print(acc)
-
-## Cross validation
-#validation  = cross_validation(rate)
-#score = validation.evaluate_log(X_train,Y_train)
-#print(score)
-
-#print("Naive Bayes:")
-## fit naive bayes
-#bayes_model = NaiveBayes()
-#fit_bayes = bayes_model.fit(X_train,Y_train)
-#pre = bayes_model.predict(X_test)
-##acc = log_model.evaluate_acc(pre,Y_test)
-#acc = bayes_model.evaluate_acc(pre,Y_test)
-#print(acc)
-
-## Cross validation
-#score = bayes_model.cross_validation(X_train,Y_train, 5)
-#print(score)
-
-
-
-## Compare accuracy of naive Bayes and logistic regression
+## Compare accuracy of naive Bayes and logistic regression before finding best learning rate
 
 # All datasets will use for logistic regression the same learning rate = 0.01 and # iterations = 500
 rate = 0.01
@@ -241,7 +204,7 @@ X_train, Y_train, X_test, Y_test = separate.separate(X,Y)
 fit_iono  = log_model.fit(X_train,Y_train) 
 
 # Cross validation
-validation  = cross_validation(rate, max_iterations = 500)
+validation  = cross_validation(rate, max_iterations = 10000)
 score = validation.evaluate_log(X_train,Y_train)
 print("Averaged training accuracy for Logistic Regression: ", score)
 
@@ -253,16 +216,18 @@ print("Accuracy on testing data for Logistic Regression: ", acc)
 ## Naive Bayes
 
 # train the data
-bayes_model = NaiveBayes()
-fit_bayes = bayes_model.fit(X_train,Y_train)
+
 
 
 # Cross validation
+bayes_model = NaiveBayes()
 score = bayes_model.cross_validation(X_train,Y_train)
 print("Averaged training accuracy for Naive Bayes: ", score)
 
 
 # Test data
+bayes_model = NaiveBayes()
+fit_bayes = bayes_model.fit(X_train,Y_train)
 pre = bayes_model.predict(X_test)
 acc = bayes_model.evaluate_acc(pre,Y_test)
 print("Accuracy on testing data for Naive Bayes: ", acc)
@@ -271,8 +236,15 @@ print()
 ## Test different learning rates for gradient descent
 
 # Loss function threshold = 5*10^-5; maximum number of iterations = 1000
-iters=[]
-acc=[]
+
+# Find automatically the best rate by choosing the rate that gives the best
+# validation accuracy with the lowest number of iterations
+best_rate = 0
+best_accuracy = 0
+lowest_iterations = 0
+
+acc = []
+iters = []
 rate = 10**-15
 for i in range(20):
     
@@ -283,12 +255,21 @@ for i in range(20):
     print("rate = ", rate, "; iterations = ", iterations, "; accuracy = ", score)
     iters.append(iterations)
     acc.append(score)
+    
+    if best_accuracy < score:
+        best_accuracy = score
+        best_rate = rate
+        lowest_iterations = iterations
+        
+    elif best_accuracy == score and lowest_iterations > iterations:
+        best_accuracy = score
+        best_rate = rate
+        lowest_iterations = iterations     
+    
     rate *= 10
-
-
-
-rate = 1
-
+    
+    
+plt.figure(4)
 plt.scatter(iters, acc)
 plt.xlabel("iterations")
 plt.ylabel("accurary")
@@ -296,46 +277,215 @@ plt.title("the accuracy on train set as a function of iterations of gradient des
 
 plt.show()
 
-#size of x and accuracy
+print()
+print("The best learning rate found is: ", best_rate)
+print()
+
+
+## Compare accuracy of naive Bayes and logistic regression before finding best learning rate
+
+rate = best_rate
+iterations = 5000
+
+## Logistic regression
+
+# train the data
+log_model  = log_regression(rate, iterations)
+fit_iono  = log_model.fit(X_train,Y_train) 
+
+# Cross validation
+validation  = cross_validation(rate, max_iterations = 10000)
+score = validation.evaluate_log(X_train,Y_train)
+print("Averaged training accuracy for Logistic Regression: ", score)
+
+# Test data
+pre = log_model.predict(X_test,fit_iono) 
+acc = log_model.evaluate_acc(pre,Y_test)
+print("Accuracy on testing data for Logistic Regression: ", acc)
+
+## Naive Bayes
+
+# train the data
+
+
+
+# Cross validation
+bayes_model = NaiveBayes()
+score = bayes_model.cross_validation(X_train,Y_train)
+print("Averaged training accuracy for Naive Bayes: ", score)
+
+
+# Test data
+bayes_model = NaiveBayes()
+fit_bayes = bayes_model.fit(X_train,Y_train)
+pre = bayes_model.predict(X_test)
+acc = bayes_model.evaluate_acc(pre,Y_test)
+print("Accuracy on testing data for Naive Bayes: ", acc)
+
+print()
+
+
+
+
+
+
+
+## Accuracy as a function of the size of dataset
+
+# Logistic regression
 acc = []
 size = []
+accT = []
+sizeT = []
 split_size = 0.1
 
 for i in range(9):
-    X_train, Y_train, X_test, Y_test = separate.separate(X,Y, split=split_size)
+    X_train_size, Y_train_size, X_discard, Y_discard = separate.separate(X_train,Y_train, split=split_size)
     # Cross validation
     validation  = cross_validation(rate, threshold = True)
-    score, iterations = validation.evaluate_log(X_train,Y_train)
+    score, iterations = validation.evaluate_log(X_train_size,Y_train_size)
     #print("Averaged training accuracy for Logistic Regression: ", score)
-    print("size of X = ", X_train.shape[0], "; iterations = ", iterations, "; accuracy = ", score)
-    size.append(X_train.shape[0])
-    acc.append(score)
-    split_size += 0.1
+    print("CV: size of X = ", X_train_size.shape[0], "; iterations = ", iterations, "; accuracy = ", score)
     
-plt.scatter(size, acc)
+    # Test data
+    log_model = log_regression(rate, 500)
+    fit_iono  = log_model.fit(X_train_size,Y_train_size)
+    pre = log_model.predict(X_test,fit_iono) 
+    accur = log_model.evaluate_acc(pre,Y_test)
+    print("Test: size of X = ", X_train_size.shape[0], "; accuracy = ", accur)
+    #print("Accuracy on testing data for Logistic Regression: ", acc)    
+    
+    
+    size.append(X_train_size.shape[0])
+    acc.append(score)
+    
+    sizeT.append(X_train_size.shape[0])
+    accT.append(accur)    
+    
+    split_size += 0.1
+
+split_size = 0.91
+for i in range(8):
+    X_train_size, Y_train_size, X_discard, Y_discard = separate.separate(X_train,Y_train, split=split_size)
+    # Cross validation
+    validation  = cross_validation(rate, threshold = True)
+    score, iterations = validation.evaluate_log(X_train_size,Y_train_size)
+    #print("Averaged training accuracy for Logistic Regression: ", score)
+    print("CV: size of X = ", X_train_size.shape[0], "; iterations = ", iterations, "; accuracy = ", score)
+    
+    # Test data
+    log_model = log_regression(rate, 500)
+    fit_iono  = log_model.fit(X_train_size,Y_train_size)
+    pre = log_model.predict(X_test,fit_iono) 
+    accur = log_model.evaluate_acc(pre,Y_test)
+    print("Test: size of X = ", X_train_size.shape[0], "; accuracy = ", accur)
+    #print("Accuracy on testing data for Logistic Regression: ", acc)    
+    
+    
+    size.append(X_train_size.shape[0])
+    acc.append(score)
+    
+    sizeT.append(X_train_size.shape[0])
+    accT.append(accur)    
+    
+    split_size += 0.01
+
+log_sizeT = sizeT
+log_accT = accT
+
+plt.figure(5)    
+plt.plot(size, acc, label = "CV")
+plt.plot(sizeT, accT, label = "Test")
+plt.legend()
 plt.xlabel("size of X_train")
 plt.ylabel("accurary")
 plt.title("the accuracy on train set as a function of size of X on logistic model")
 
 plt.show()
+
+print()
+
 #bayes model
 acc = []
 size = []
+accT = []
+sizeT = []
 split_size = 0.1
 
 for i in range(9):
-    X_train, Y_train, X_test, Y_test = separate.separate(X,Y, split=split_size)
+    X_train_size, Y_train_size, X_discard, Y_discard = separate.separate(X_train,Y_train, split=split_size)
     # Cross validation
-    score = bayes_model.cross_validation(X_train,Y_train)
-    #print("Averaged training accuracy for Logistic Regression: ", score)
-    print("size of X = ", X_train.shape[0], "; accuracy = ", score)
-    size.append(X_train.shape[0])
-    acc.append(score)
-    split_size += 0.1
+    bayes_model = NaiveBayes()
+    score = bayes_model.cross_validation(X_train_size,Y_train_size)
+    print("CV: size of X = ", X_train.shape[0], "; accuracy = ", score)
     
+    # Test data
+    bayes_model = NaiveBayes()
+    fit_bayes = bayes_model.fit(X_train_size,Y_train_size)
+    pre = bayes_model.predict(X_test)
+    accur = bayes_model.evaluate_acc(pre,Y_test)
+    print("Test: size of X = ", X_train_size.shape[0], "; accuracy = ", accur)
+    #print("Accuracy on testing data for Logistic Regression: ", acc)    
+    
+    
+    size.append(X_train_size.shape[0])
+    acc.append(score)
+    
+    sizeT.append(X_train_size.shape[0])
+    accT.append(accur)    
+    
+    split_size += 0.1
+
+split_size = 0.91
+for i in range(8):
+    X_train_size, Y_train_size, X_discard, Y_discard = separate.separate(X_train,Y_train, split=split_size)
+    # Cross validation
+    bayes_model = NaiveBayes()
+    score = bayes_model.cross_validation(X_train_size,Y_train_size)
+    print("CV: size of X = ", X_train.shape[0], "; accuracy = ", score)
+    
+    # Test data
+    bayes_model = NaiveBayes()
+    fit_bayes = bayes_model.fit(X_train_size,Y_train_size)
+    pre = bayes_model.predict(X_test)
+    accur = bayes_model.evaluate_acc(pre,Y_test)
+    print("Test: size of X = ", X_train_size.shape[0], "; accuracy = ", accur)
+    #print("Accuracy on testing data for Logistic Regression: ", acc)    
+    
+    
+    size.append(X_train_size.shape[0])
+    acc.append(score)
+    
+    sizeT.append(X_train_size.shape[0])
+    accT.append(accur)    
+    
+    split_size += 0.01
+
+
+#for i in range(9):
+    #X_train, Y_train, X_test, Y_test = separate.separate(X,Y, split=split_size)
+    ## Cross validation
+    #score = bayes_model.cross_validation(X_train,Y_train)
+    ##print("Averaged training accuracy for Logistic Regression: ", score)
+    #print("size of X = ", X_train.shape[0], "; accuracy = ", score)
+    #size.append(X_train.shape[0])
+    #acc.append(score)
+    #split_size += 0.1
+
+plt.figure(6)    
 plt.xlabel("size of X_train")
 plt.ylabel("accurary")
 plt.title("the accuracy on train set as a function of size od X on Naive Bayes model")
-plt.scatter(size, acc)
+plt.plot(size, acc, label = "CV")
+plt.plot(sizeT, accT, label = "Test")
+plt.legend()
 plt.show()
 
+plt.figure(7)    
+plt.xlabel("size of X_train")
+plt.ylabel("accurary")
+plt.title("the accuracy on train set as a function of size od X on Naive Bayes model")
+plt.plot(log_sizeT, log_accT, label = "Logistic Regression Test")
+plt.plot(sizeT, accT, label = "Naive Bayes Test")
+plt.legend()
+plt.show()

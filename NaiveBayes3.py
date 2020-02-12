@@ -49,6 +49,11 @@ class NaiveBayes:
         pos = np.argwhere(y == 1)
         neg = np.argwhere(y == 0)
         
+        firstoutcome_mean = list()
+        firstoutcome_std = list()
+        secondoutcome_mean = list()
+        secondoutcome_std = list()         
+        
         # Mean and standard deviation for each class-feature pair
         for i in range(X.shape[1]):
             self.firstoutcome_mean.append(X[neg,i].mean())
